@@ -131,7 +131,24 @@ fun QuestionDisplay(
                                     Color.Red.copy(alpha = .6f)
                             )
                     )
-                    Text(text = answerText, color = AppColors.mOffWhite)
+                    val annotatedString = buildAnnotatedString {
+                        withStyle(
+                            style = SpanStyle(
+                                fontWeight = FontWeight.Light,
+                                color =
+                                if (correctAnswerState.value == true && index == answerState.value)
+                                    Color.Green
+                                else if (correctAnswerState.value == false && index == answerState.value)
+                                    Color.Red
+                                else
+                                    AppColors.mOffWhite,
+                                fontSize = 17.sp
+                        )) {
+                            append(answerText)
+                        }
+                    }
+
+                    Text(text = annotatedString)
 
                 }
             }
