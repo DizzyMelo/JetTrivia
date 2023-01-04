@@ -1,6 +1,5 @@
 package com.study.jettrivia.component
 
-import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -8,7 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,7 +22,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.study.jettrivia.model.QuestionItem
@@ -37,7 +35,9 @@ fun Questions(viewModel: QuestionViewModel) {
     if (viewModel.data.value.loading == true) {
         CircularProgressIndicator()
     } else {
-        Log.d("DEBUG Q", "Questions: ${questions?.size}")
+        if (questions != null) {
+            QuestionDisplay(question = questions.first())
+        }
     }
 }
 
@@ -45,18 +45,33 @@ fun Questions(viewModel: QuestionViewModel) {
 @Composable
 fun QuestionDisplay(
     question: QuestionItem,
-    questionIndex: MutableState<Int>,
-    viewModel: QuestionViewModel,
-    onNextClick: (Int) -> Unit
+//    questionIndex: MutableState<Int>,
+//    viewModel: QuestionViewModel,
+    onNextClick: (Int) -> Unit = {}
 ) {
     val choicesState = remember(question) {
         question.choices.toMutableList()
     }
+
+    val answerState = remember(question) {
+        mutableStateOf<Int?>(null)
+    }
+
+    val correctAnswerState = remember(question) {
+        mutableStateOf<Boolean?>(null)
+    }
+
+    val updateAnswer: (Int) -> Unit = remember(question) {
+        {
+            answerState.value = it
+            correctAnswerState.value = choicesState[it] == question.answer
+        }
+    }
+
     val dashedPathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), phase = 0f)
     Surface(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(4.dp),
+            .fillMaxSize(),
         color = AppColors.mDarkPurple
     ) {
         Column(
@@ -67,7 +82,7 @@ fun QuestionDisplay(
             QuestionTracker()
             DottedLine(pathEffect = dashedPathEffect)
             Text(
-                text = "What is the meaning of all this?",
+                text = question.question,
                 modifier = Modifier
                     .padding(6.dp)
                     .align(Alignment.Start)
@@ -92,15 +107,31 @@ fun QuestionDisplay(
                             ),
                             shape = RoundedCornerShape(15.dp)
                         )
-                        .clip(RoundedCornerShape(
-                            topStartPercent = 50,
-                            topEndPercent = 50,
-                            bottomEndPercent = 50,
-                            bottomStartPercent = 50)
+                        .clip(
+                            RoundedCornerShape(
+                                topStartPercent = 50,
+                                topEndPercent = 50,
+                                bottomEndPercent = 50,
+                                bottomStartPercent = 50
+                            )
                         )
                         .background(Color.Transparent),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    RadioButton(
+                        selected = answerState.value == index,
+                        onClick = { updateAnswer(index) },
+                        modifier = Modifier.padding(start = 16.dp),
+                        colors = RadioButtonDefaults
+                            .colors(
+                                selectedColor =
+                                if (correctAnswerState.value == true && index == answerState.value)
+                                    Color.Green.copy(alpha = .2f)
+                                else
+                                    Color.Red.copy(alpha = .6f)
+                            )
+                    )
+                    Text(text = answerText, color = AppColors.mOffWhite)
 
                 }
             }
