@@ -4,9 +4,12 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -32,11 +35,22 @@ import com.study.jettrivia.util.AppColors
 fun Questions(viewModel: QuestionViewModel) {
     val questions = viewModel.data.value.data?.toMutableList()
 
+    val questionIndex = remember {
+        mutableStateOf(0)
+    }
     if (viewModel.data.value.loading == true) {
         CircularProgressIndicator()
     } else {
-        if (questions != null) {
-            QuestionDisplay(question = questions.first())
+        val question = try {
+            questions?.get(questionIndex.value)
+        } catch (ex: Exception) {
+            null
+        }
+
+        if (questions != null && question != null) {
+            QuestionDisplay(question, questionIndex, questions.size, viewModel) {
+                questionIndex.value += 1
+            }
         }
     }
 }
@@ -45,8 +59,9 @@ fun Questions(viewModel: QuestionViewModel) {
 @Composable
 fun QuestionDisplay(
     question: QuestionItem,
-//    questionIndex: MutableState<Int>,
-//    viewModel: QuestionViewModel,
+    questionIndex: MutableState<Int>,
+    total: Int,
+    viewModel: QuestionViewModel,
     onNextClick: (Int) -> Unit = {}
 ) {
     val choicesState = remember(question) {
@@ -79,7 +94,7 @@ fun QuestionDisplay(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
-            QuestionTracker()
+            QuestionTracker(current = questionIndex.value + 1, total = total)
             DottedLine(pathEffect = dashedPathEffect)
             Text(
                 text = question.question,
@@ -151,6 +166,20 @@ fun QuestionDisplay(
                     Text(text = annotatedString)
 
                 }
+            }
+
+            Button(
+                onClick = { onNextClick.invoke(questionIndex.value) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(6.dp),
+                shape = CircleShape.copy(all = CornerSize(10.dp)),
+                colors = ButtonDefaults.buttonColors(
+                    backgroundColor = AppColors.mLightBlue,
+                    contentColor = AppColors.mOffWhite
+                )
+            ) {
+                Text(text = "Next", modifier = Modifier.padding(4.dp), fontSize = 17.sp)
             }
 
         }
