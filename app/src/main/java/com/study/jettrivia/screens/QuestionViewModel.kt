@@ -22,7 +22,11 @@ class QuestionViewModel @Inject constructor(private val repository: QuestionRepo
 
     private fun getAllQuestions() {
         viewModelScope.launch {
+            data.value.loading = true
             data.value = repository.getAllQuestions()
+            if (data.value.data.toString().isNotEmpty()) {
+                data.value.loading = false
+            }
         }
     }
 }
