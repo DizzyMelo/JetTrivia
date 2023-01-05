@@ -23,8 +23,10 @@ import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.study.jettrivia.model.QuestionItem
@@ -48,7 +50,7 @@ fun Questions(viewModel: QuestionViewModel) {
         }
 
         if (questions != null && question != null) {
-            QuestionDisplay(question, questionIndex, questions.size, viewModel) {
+            QuestionDisplay(question, questionIndex, questions.size) {
                 questionIndex.value += 1
             }
         }
@@ -61,7 +63,6 @@ fun QuestionDisplay(
     question: QuestionItem,
     questionIndex: MutableState<Int>,
     total: Int,
-    viewModel: QuestionViewModel,
     onNextClick: (Int) -> Unit = {}
 ) {
     val choicesState = remember(question) {
@@ -94,6 +95,7 @@ fun QuestionDisplay(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
+            if (questionIndex.value >= 3) ScoreMeter(score = questionIndex.value)
             QuestionTracker(current = questionIndex.value + 1, total = total)
             DottedLine(pathEffect = dashedPathEffect)
             Text(
@@ -225,4 +227,64 @@ fun QuestionTracker(current: Int = 1, total: Int = 4056) {
             }
         }
     }, modifier = Modifier.padding(20.dp))
+}
+
+@Preview
+@Composable
+fun ScoreMeter(score: Int = 12) {
+    val gradient = Brush.linearGradient(colors = listOf(Color(0xFFF95075),Color(0xFFBE6BE5)))
+    val progressFactor = remember(score) {
+        mutableStateOf(score * .005f)
+    }
+    Row(
+        modifier = Modifier
+            .padding(3.dp)
+            .fillMaxWidth()
+            .height(45.dp)
+            .border(
+                width = 4.dp,
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        AppColors.mLightPurple,
+                        AppColors.mLightPurple
+                    )
+                ),
+                shape = CircleShape
+            )
+            .clip(
+                shape = RoundedCornerShape(
+                    topStartPercent = 50,
+                    topEndPercent = 50,
+                    bottomStartPercent = 50,
+                    bottomEndPercent = 50
+                )
+            )
+            .background(Color.Transparent),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Button(
+            contentPadding = PaddingValues(1.dp),
+            onClick = { },
+            modifier = Modifier
+                .fillMaxWidth(fraction = progressFactor.value)
+                .background(brush = gradient),
+            enabled = false,
+            elevation = null,
+            colors = ButtonDefaults.buttonColors(
+                backgroundColor = Color.Transparent,
+                disabledBackgroundColor = Color.Transparent
+            )
+        ) {
+            Text(
+                text = (score * 10).toString(),
+                modifier = Modifier
+                    .clip(shape = RoundedCornerShape(23.dp))
+                    .fillMaxHeight(.87f)
+                    .fillMaxWidth()
+                    .padding(6.dp),
+                color = AppColors.mOffWhite,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
 }
